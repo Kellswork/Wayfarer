@@ -2,27 +2,28 @@ package main
 
 import (
 	"log"
-	"os"
-	"os/signal"
 
-	"github.com/gin-gonic/gin"
+	"github.com/kellswork/wayfarer/internal/api"
+	"github.com/kellswork/wayfarer/internal/config"
+	"github.com/kellswork/wayfarer/internal/db"
+	"github.com/kellswork/wayfarer/internal/db/repositories"
 )
 
 func main() {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("unable to initiliaze config, %v\n", err.Error())
+	}
+	// init db
+	dbConnection, err := db.ConnectDatabase(cfg.DBURL)
+	if err != nil {
+		log.Fatalf("unable to initiliaze database, %v\n", err.Error())
+	}
+	defer db.CloseDatabase(dbConnection)
 
-	// set go gin as router
-	router := gin.Default()
+	repo := repositories.NewRepositories(dbConnection)
 
-	// run server in a seperate go routine
-	go func() {
-		router.Run("localhost:8080")
-	}()
+	// call server/api
+	api.RunServer(repo, cfg)
 
-	// create channels to listen to shutdown signals
-	shutdownChan := make(chan os.Signal, 1)
-	signal.Notify(shutdownChan, os.Interrupt)
-
-	// wait for a stop signal to shut down the server
-	sig := <-shutdownChan
-	log.Printf("shutting down server: %v\n", sig)
 }
