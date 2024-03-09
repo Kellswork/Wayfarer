@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	_ "github.com/lib/pq" // undscore to indicate it is noit really used but has to be there
 )
 
 // setup postgres databse connection
