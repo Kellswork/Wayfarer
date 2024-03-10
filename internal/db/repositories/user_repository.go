@@ -10,7 +10,7 @@ import (
 
 type UserRepository interface {
 	Create(ctx context.Context, user *models.User) error
-	EmailExists(ctx context.Context, email string) bool
+	EmailExists(ctx context.Context, email string) (models.User, bool)
 }
 
 type userRespository struct {
@@ -34,15 +34,16 @@ func (ur userRespository) Create(ctx context.Context, user *models.User) error {
 	return nil
 }
 
-// TODO: Validate by email
-func (ur userRespository) EmailExists(ctx context.Context, email string) bool {
-	var emailCount int
-	query := "SELECT COUNT(*) email FROM users WHERE email = $1"
+// TODO: Validate by email, it returns a boolaean and data i need for login, ask about the fact this function is returning two things, so instead of returning two things, return only a boolean and then create a get endpoint to return all the details of the user
+func (ur userRespository) EmailExists(ctx context.Context, email string) (models.User, bool) {
+	var user models.User
 
-	err := ur.db.QueryRow(query, email).Scan(&emailCount)
+	query := "SELECT id, is_admin, email, password FROM users WHERE email = $1"
+
+	err := ur.db.QueryRow(query, email).Scan(&user.ID, &user.IsAdmin, &user.Email, &user.Password)
 	if err != nil {
 		fmt.Printf("checking if email exists: %v\n", err)
-		return false
+		return user, false
 	}
-	return emailCount > 0
+	return user, len(user.Email) > 0
 }
