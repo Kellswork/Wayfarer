@@ -67,10 +67,18 @@ func (uc *UserControllers) CreateUser(c *gin.Context) {
 	}
 
 	// check if the email has been used before and return a json response accordingly
-	_, doesEmailExists := uc.userRepo.EmailExists(c.Request.Context(), userRequestBody.Email)
+	doesEmailExists, err := uc.userRepo.EmailExists(c.Request.Context(), userRequestBody.Email)
+	if err != nil {
+		log.Printf("error occured while verifying if email exist: %v\n", err.Error())
+		c.JSON(http.StatusInternalServerError, apiResponseError{
+			Status: "error",
+			Error:  "error occured while verifying if email exist",
+		})
+		return
+	}
+
 	if doesEmailExists {
 		log.Printf("The email already exists: %v\n", userRequestBody.Email)
-
 		c.JSON(http.StatusBadRequest, apiResponseError{
 			Status: "error",
 			Error:  "This email already exists",
@@ -147,8 +155,15 @@ func (uc *UserControllers) LoginUser(c *gin.Context) {
 		return
 	}
 	// verify if the email existin teh database
-
-	user, doesEmailExists := uc.userRepo.EmailExists(c.Request.Context(), loginUserRequestBody.Email)
+	doesEmailExists, err := uc.userRepo.EmailExists(c.Request.Context(), loginUserRequestBody.Email)
+	if err != nil {
+		log.Printf("error occured while verifying if email exist: %v\n", err.Error())
+		c.JSON(http.StatusInternalServerError, apiResponseError{
+			Status: "error",
+			Error:  "error occured while verifying if email exist",
+		})
+		return
+	}
 
 	if !doesEmailExists {
 		log.Printf("The email deosnt exists in the db: %v\n", loginUserRequestBody.Email)
@@ -159,9 +174,19 @@ func (uc *UserControllers) LoginUser(c *gin.Context) {
 		return
 	}
 	// decrypt saved hash password and comaper if its the same with the user password
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginUserRequestBody.Password))
+	user, err := uc.userRepo.GetByEmail(c.Request.Context(), loginUserRequestBody.Email)
 	if err != nil {
-		log.Printf("login password is not correct: %v\n", loginUserRequestBody.Email)
+		log.Printf("error occured while getting user details: %v\n", err.Error())
+		c.JSON(http.StatusInternalServerError, apiResponseError{
+			Status: "error",
+			Error:  "could not get user details",
+		})
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginUserRequestBody.Password))
+	if err != nil {
+		log.Printf("login password is not correct: %v\n", err.Error())
 		c.JSON(http.StatusBadRequest, apiResponseError{
 			Status: "error",
 			Error:  "password is not correct",
