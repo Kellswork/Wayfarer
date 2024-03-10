@@ -29,6 +29,11 @@ type createUserResponse struct {
 	Data   models.CreatedUser `json:"data"`
 }
 
+type loginUserResponse struct {
+	Status string           `json:"status"`
+	Data   models.LoginUser `json:"data"`
+}
+
 func NewUserControllers(userRepo repositories.UserRepository) *UserControllers {
 	return &UserControllers{
 		userRepo: userRepo,
@@ -62,8 +67,8 @@ func (uc *UserControllers) CreateUser(c *gin.Context) {
 	}
 
 	// check if the email has been used before and return a json response accordingly
-	result := uc.userRepo.EmailExists(c.Request.Context(), userRequestBody.Email)
-	if result {
+	_, doesEmailExists := uc.userRepo.EmailExists(c.Request.Context(), userRequestBody.Email)
+	if doesEmailExists {
 		log.Printf("The email already exists: %v\n", userRequestBody.Email)
 
 		c.JSON(http.StatusBadRequest, apiResponseError{
@@ -127,4 +132,58 @@ func (uc *UserControllers) CreateUser(c *gin.Context) {
 		CreatedAt: user.CreatedAt,
 	}
 	c.JSON(http.StatusCreated, createUserResponse{Status: "success", Data: createdUser})
+}
+
+func (uc *UserControllers) LoginUser(c *gin.Context) {
+	// get user input from request body
+	var loginUserRequestBody models.LoginUserRequest
+	if err := c.BindJSON(&loginUserRequestBody); err != nil {
+		log.Printf("failed to decode json data: %v\n", err.Error())
+
+		c.JSON(http.StatusBadRequest, apiResponseError{
+			Status: "error",
+			Error:  "invalid request body",
+		})
+		return
+	}
+	// verify if the email existin teh database
+
+	user, doesEmailExists := uc.userRepo.EmailExists(c.Request.Context(), loginUserRequestBody.Email)
+
+	if !doesEmailExists {
+		log.Printf("The email deosnt exists in the db: %v\n", loginUserRequestBody.Email)
+		c.JSON(http.StatusBadRequest, apiResponseError{
+			Status: "error",
+			Error:  "this email has no account created",
+		})
+		return
+	}
+	// decrypt saved hash password and comaper if its the same with the user password
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(loginUserRequestBody.Password))
+	if err != nil {
+		log.Printf("login password is not correct: %v\n", loginUserRequestBody.Email)
+		c.JSON(http.StatusBadRequest, apiResponseError{
+			Status: "error",
+			Error:  "password is not correct",
+		})
+		return
+	}
+	// if the email and password is correct, generate the token
+	token, err := utils.GenerateJwtToken(user.ID)
+	if err != nil {
+		log.Printf("generating jwt token failed: %v\n", loginUserRequestBody.Email)
+		c.JSON(http.StatusBadRequest, apiResponseError{
+			Status: "error",
+			Error:  "failed to generate jwt token",
+		})
+		return
+	}
+	// add it to the header
+	c.Header("Authorization", "Bearer "+token)
+	// return login success message and data accordingly
+	loginUser := models.LoginUser{
+		UserID:  user.ID,
+		IsAdmin: user.IsAdmin,
+	}
+	c.JSON(http.StatusOK, loginUserResponse{Status: "success", Data: loginUser})
 }
