@@ -37,11 +37,11 @@ func (ur userRespository) Create(ctx context.Context, user *models.User) error {
 // TODO: Validate by email
 func (ur userRespository) EmailExists(ctx context.Context, email string) bool {
 	var emailCount int
-	query := "SELECT * FROM users WHERE email = $1"
+	query := "SELECT COUNT(*) email FROM users WHERE email = $1"
 
 	err := ur.db.QueryRow(query, email).Scan(&emailCount)
 	if err != nil {
-		fmt.Println("checking if email exists:", err)
+		fmt.Printf("checking if email exists: %v\n", err)
 		return false
 	}
 	return emailCount > 0
