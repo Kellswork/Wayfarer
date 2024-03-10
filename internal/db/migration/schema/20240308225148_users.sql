@@ -9,8 +9,8 @@ CREATE TABLE
     password VARCHAR(255) NOT NULL,
     is_admin BOOLEAN NOT NULL,
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
+  created_at TIMESTAMP,
+  updated_at TIMESTAMP
   );
 -- +goose StatementEnd
 

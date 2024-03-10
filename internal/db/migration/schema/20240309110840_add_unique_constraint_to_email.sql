@@ -7,5 +7,5 @@ ALTER TABLE users
 
 -- +goose Down
 -- +goose StatementBegin
-DROP CONSTRAINT unique_email;
+ALTER TABLE users DROP CONSTRAINT IF EXISTS unique_email;
 -- +goose StatementEnd
