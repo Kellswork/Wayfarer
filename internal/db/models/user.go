@@ -29,3 +29,13 @@ type CreatedUser struct {
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
 }
+
+type LoginUserRequest struct {
+	Email    string `json:"email" db:"email"`
+	Password string `json:"password" validate:"required,min=4"`
+}
+
+type LoginUser struct {
+	UserID  string `json:"user_id"`
+	IsAdmin bool   `json:"is_admin"`
+}

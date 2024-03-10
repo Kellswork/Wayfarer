@@ -23,6 +23,7 @@ func RunServer(repo *repositories.Repositories, cfg config.Config) {
 	userController := controllers.NewUserControllers(repo.UserRepository)
 
 	router.POST("/signup", userController.CreateUser)
+	router.POST("/login", userController.LoginUser)
 
 	// run server in a seperate go routine
 	go func() {
