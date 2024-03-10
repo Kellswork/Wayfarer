@@ -3,12 +3,14 @@ package controllers
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/kellswork/wayfarer/internal/db/models"
 	"github.com/kellswork/wayfarer/internal/db/repositories"
+	"github.com/kellswork/wayfarer/internal/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -23,8 +25,8 @@ type apiResponseError struct {
 }
 
 type createUserResponse struct {
-	Status string      `json:"status"`
-	Data   models.User `json:"data"`
+	Status string             `json:"status"`
+	Data   models.CreatedUser `json:"data"`
 }
 
 func NewUserControllers(userRepo repositories.UserRepository) *UserControllers {
@@ -90,6 +92,7 @@ func (uc *UserControllers) CreateUser(c *gin.Context) {
 		LastName:  userRequestBody.LastName,
 		Password:  string(hashedPassword),
 		IsAdmin:   false,
+		CreatedAt: time.Now(),
 	}
 
 	// add user into the database
@@ -99,6 +102,29 @@ func (uc *UserControllers) CreateUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, apiResponseError{Status: "error", Error: "failed to insert data into the database"})
 		return
 	}
+
+	// generate json web token and add to header
+	token, err := utils.GenerateJwtToken(user.ID)
+	if err != nil {
+		log.Printf("failed to generate token: %v\n", err.Error())
+		c.JSON(http.StatusInternalServerError, apiResponseError{
+			Status: "error",
+			Error:  "failed to generate token",
+		})
+		return
+	}
+	// set token as header
+	c.Header("Authorization", "Bearer "+token)
+
 	// send a response if successful, send json susccess response
-	c.JSON(http.StatusCreated, createUserResponse{Status: "success", Data: user})
+	// create a new user and remove the apssword then return that data to the user
+	createdUser := models.CreatedUser{
+		ID:        user.ID,
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		IsAdmin:   user.IsAdmin,
+		CreatedAt: user.CreatedAt,
+	}
+	c.JSON(http.StatusCreated, createUserResponse{Status: "success", Data: createdUser})
 }
