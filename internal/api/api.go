@@ -22,12 +22,12 @@ func RunServer(repo *repositories.Repositories, cfg config.Config) {
 
 	userController := controllers.NewUserControllers(repo.UserRepository)
 
-	router.POST("/signup", userController.CreateUser)
-	router.POST("/login", userController.LoginUser)
+	router.POST("/api/v1/signup", userController.CreateUser)
+	router.POST("/api/v1/login", userController.LoginUser)
 
 	// run server in a seperate go routine
 	go func() {
-		router.Run("localhost:8080")
+		router.Run("localhost:3200")
 	}()
 
 	// create channels to listen to shutdown signals
