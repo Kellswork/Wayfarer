@@ -61,6 +61,46 @@ func Test_CreateUser(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func Test_EmailExist(t *testing.T) {
+	// 1. setup pahse
+	// 1.1 setup db connectiom
+	err := godotenv.Load("../../../.env")
+	require.NoError(t, err)
+	testDBUrl := os.Getenv("TEST_DB_URL")
+	ctx := context.Background()
+	dbStore, err := db.ConnectDatabase(testDBUrl)
+	require.NoError(t, err)
+
+	defer db.CloseDatabase(dbStore)
+
+	migrator := migration.New(dbStore)
+	err = migrator.Up()
+	assert.NoError(t, err)
+
+	sampleUser := models.User{
+		ID:        uuid.NewString(),
+		Email:     "kellasw@gmail.com",
+		FirstName: "Kelechi",
+		LastName:  "Ogbonna",
+		Password:  "1234",
+		IsAdmin:   false,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	userRepo := newUserRepository(dbStore)
+	err = userRepo.Create(ctx, &sampleUser)
+	assert.NoError(t, err)
+
+	resp, err := userRepo.EmailExists(ctx, sampleUser.Email)
+	assert.NoError(t, err)
+
+	assert.Equal(t, resp, true)
+
+	err = deleteUser(dbStore, sampleUser.ID)
+	require.NoError(t, err)
+}
+
 func deleteUser(db *sql.DB, id string) error {
 	query := "DELETE FROM users WHERE id = $1"
 	_, err := db.Exec(query, id)
