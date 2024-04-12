@@ -10,8 +10,8 @@ CREATE TABLE
     year VARCHAR(255) NOT NULL,
     capacity INT NOT NULL,
 
-  created_at TIMESTAMP,
-  updated_at TIMESTAMP
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
   );
 -- +goose StatementEnd
 
