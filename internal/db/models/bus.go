@@ -8,7 +8,7 @@ type Bus struct {
 	Model        string    `json:"model" db:"model"`
 	Type         BusType   `json:"type" db:"type"`
 	Year         string    `json:"year" db:"year"`
-	Capacity     string    `json:"capacity" db:"capacity"`
+	Capacity     int       `json:"capacity" db:"capacity"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }
@@ -25,4 +25,5 @@ type BusReqBody struct {
 	Model        string  `json:"model" db:"model"`
 	Type         BusType `json:"type" db:"type"`
 	Year         string  `json:"year" db:"year"`
+	Capacity     int     `json:"capacity" db:"capacity"`
 }
