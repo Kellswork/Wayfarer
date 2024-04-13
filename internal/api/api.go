@@ -21,9 +21,12 @@ func RunServer(repo *repositories.Repositories, cfg config.Config) {
 	router := gin.Default()
 
 	userController := controllers.NewUserControllers(repo.UserRepository)
+	busController := controllers.NewBusControllers(repo.BusRepository)
 
 	router.POST("/api/v1/signup", userController.CreateUser)
 	router.POST("/api/v1/login", userController.LoginUser)
+	router.POST("/api/v1/buses", busController.AddBus)
+	router.GET("/api/v1/buses", busController.GetAllBuses)
 
 	// run server in a seperate go routine
 	go func() {
