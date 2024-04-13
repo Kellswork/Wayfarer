@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -17,8 +18,13 @@ type BusControllers struct {
 }
 
 type apiBusResponseSucess struct {
-	Status string     `json:"status"`
-	Data   models.Bus `json:"data"`
+	Status string             `json:"status"`
+	Data   *models.CreatedBus `json:"data"`
+}
+
+type getAllBusesResponse struct {
+	Status string              `json:"status"`
+	Data   []models.CreatedBus `json:"data"`
 }
 
 func NewBusControllers(busRepo repositories.BusRepository) *BusControllers {
@@ -86,10 +92,30 @@ func (bc *BusControllers) AddBus(c *gin.Context) {
 	}
 
 	// add user into the database
-	if err := bc.busRepo.Create(c.Request.Context(), &bus); err != nil {
+	result, err := bc.busRepo.Create(c.Request.Context(), &bus)
+
+	if err != nil {
 		// if fail send json failure response
 		log.Printf("failed to add bus to the db: %v\n", err.Error())
-		c.JSON(http.StatusInternalServerError, apiResponseError{Status: "error", Error: "failed to insert data into the database"})
+		c.JSON(http.StatusInternalServerError, apiResponseError{Status: "error", Error: "failed to insert bus data into the database"})
 		return
 	}
+	fmt.Println()
+
+	c.JSON(http.StatusOK, apiBusResponseSucess{Status: "success", Data: result})
+}
+
+func (bc *BusControllers) GetAllBuses(c *gin.Context) {
+
+	// add user into the database
+	result, err := bc.busRepo.FindAllBuses(c.Request.Context())
+
+	if err != nil {
+		// if fail send json failure response
+		log.Printf("failed to fetch buses from the db: %v\n", err.Error())
+		c.JSON(http.StatusInternalServerError, apiResponseError{Status: "error", Error: "failed to fetch buses from the database"})
+		return
+	}
+
+	c.JSON(http.StatusOK, getAllBusesResponse{Status: "sucess", Data: *result})
 }
