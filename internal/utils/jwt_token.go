@@ -30,7 +30,6 @@ func GenerateJwtToken(ID string, IsAdmin bool) (string, error) {
 	})
 
 	getJwtToken()
-	log.Printf("privateKey: %v\n", jwtPrivateKey)
 	ss, err := token.SignedString(jwtPrivateKey)
 	return ss, err
 }
