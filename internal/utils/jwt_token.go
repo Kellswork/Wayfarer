@@ -1,51 +1,60 @@
 package utils
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
 	"fmt"
+	"log"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 )
 
-// struct to represent json webtoken
+var jwtPrivateKey []byte
 
-func generateECDSAPrivateKey() (*ecdsa.PrivateKey, error) {
+func getJwtToken() {
 
-	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	var err = godotenv.Load(".env")
 	if err != nil {
-		fmt.Printf("failed to generate private key: %v", err.Error())
-		return nil, err
+		log.Printf("failed to load env file: %v\n", err.Error())
 	}
-	return privateKey, nil
+	jwtPrivateKey = []byte(os.Getenv("JWT_SECRET"))
 }
 
-func GenerateJwtToken(ID string) (string, error) {
+func GenerateJwtToken(ID string, IsAdmin bool) (string, error) {
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
-		"id":  ID,
-		"exp": time.Now().Add(time.Hour * 24).Unix(),
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"id":      ID,
+		"isAdmin": IsAdmin,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
 	})
-	jwtKey, _ := generateECDSAPrivateKey()
-	return token.SignedString(jwtKey)
+
+	getJwtToken()
+	log.Printf("privateKey: %v\n", jwtPrivateKey)
+	ss, err := token.SignedString(jwtPrivateKey)
+	return ss, err
 }
 
-func VerifyJwtToken(tokenString string) (*jwt.Token, error) {
-	jwtKey, _ := generateECDSAPrivateKey()
+func VerifyJwtToken(tokenString string) (jwt.MapClaims, error) {
+	getJwtToken()
 	token, err := jwt.Parse(tokenString, func(jt *jwt.Token) (interface{}, error) {
 
-		_, ok := jt.Method.(*jwt.SigningMethodHMAC)
-		if !ok {
+		if _, ok := jt.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signin method %v", jt.Header["alg"])
 		}
 
-		return jwtKey, nil
+		return jwtPrivateKey, nil
+
 	})
 
 	if err != nil {
 		return nil, err
 	}
-	return token, nil
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok || !token.Valid {
+		return nil, err
+	}
+
+	return claims, nil
 }
