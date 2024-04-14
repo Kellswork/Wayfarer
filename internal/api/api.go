@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/kellswork/wayfarer/internal/api/controllers"
+	"github.com/kellswork/wayfarer/internal/api/middleware"
 	"github.com/kellswork/wayfarer/internal/config"
 	"github.com/kellswork/wayfarer/internal/db/repositories"
 )
@@ -25,8 +26,8 @@ func RunServer(repo *repositories.Repositories, cfg config.Config) {
 
 	router.POST("/api/v1/signup", userController.CreateUser)
 	router.POST("/api/v1/login", userController.LoginUser)
-	router.POST("/api/v1/buses", busController.AddBus)
-	router.GET("/api/v1/buses", busController.GetAllBuses)
+	router.POST("/api/v1/buses", middleware.IsAuthenticated(), middleware.IsAdmin(), busController.AddBus)
+	router.GET("/api/v1/buses", middleware.IsAuthenticated(), middleware.IsAdmin(), busController.GetAllBuses)
 
 	// run server in a seperate go routine
 	go func() {

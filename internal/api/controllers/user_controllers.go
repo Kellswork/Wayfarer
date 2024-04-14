@@ -117,7 +117,7 @@ func (uc *UserControllers) CreateUser(c *gin.Context) {
 	}
 
 	// generate json web token and add to header
-	token, err := utils.GenerateJwtToken(user.ID)
+	token, err := utils.GenerateJwtToken(user.ID, user.IsAdmin)
 	if err != nil {
 		log.Printf("failed to generate token: %v\n", err.Error())
 		c.JSON(http.StatusInternalServerError, apiResponseError{
@@ -194,7 +194,7 @@ func (uc *UserControllers) LoginUser(c *gin.Context) {
 		return
 	}
 	// if the email and password is correct, generate the token
-	token, err := utils.GenerateJwtToken(user.ID)
+	token, err := utils.GenerateJwtToken(user.ID, user.IsAdmin)
 	if err != nil {
 		log.Printf("generating jwt token failed: %v\n", loginUserRequestBody.Email)
 		c.JSON(http.StatusBadRequest, apiResponseError{
