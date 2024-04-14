@@ -23,11 +23,15 @@ func RunServer(repo *repositories.Repositories, cfg config.Config) {
 
 	userController := controllers.NewUserControllers(repo.UserRepository)
 	busController := controllers.NewBusControllers(repo.BusRepository)
+	tripController := controllers.NewTripControllers(repo.TripRepository)
 
 	router.POST("/api/v1/signup", userController.CreateUser)
 	router.POST("/api/v1/login", userController.LoginUser)
 	router.POST("/api/v1/buses", middleware.IsAuthenticated(), middleware.IsAdmin(), busController.AddBus)
 	router.GET("/api/v1/buses", middleware.IsAuthenticated(), middleware.IsAdmin(), busController.GetAllBuses)
+	router.POST("/api/v1/trips", middleware.IsAuthenticated(), middleware.IsAdmin(), tripController.CreateTrip)
+	router.PATCH("/api/v1/trips/:tripID", middleware.IsAuthenticated(), middleware.IsAdmin(), tripController.CancelTrip)
+	router.GET("/api/v1/trips", middleware.IsAuthenticated(), tripController.GetAllTrips)
 
 	// run server in a seperate go routine
 	go func() {
