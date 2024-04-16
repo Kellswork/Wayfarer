@@ -53,3 +53,5 @@ jobs:
 
       - name: Run test
         run: go test ./...
+        env:
+          TEST_DB_URL: postgres://postgres:postgres@localhost:5432/postgres
