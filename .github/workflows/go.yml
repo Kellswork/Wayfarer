@@ -46,7 +46,7 @@ jobs:
 
  
       - name: Install goose
-        run: go get -u go install github.com/pressly/goose/v3/cmd/goose@latest
+        run: go install github.com/pressly/goose/v3/cmd/goose@latest
 
       - name: Run database migrations
         run: goose postgres "postgres://postgres:postgres@localhost:5432/postgres" up
