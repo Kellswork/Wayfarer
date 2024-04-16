@@ -1,0 +1,52 @@
+name: TEST
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+
+    steps:
+      # Downloads a copy of the code in your repository before running CI tests
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.20"
+          cache-dependency-path: subdir/go.sum # caching dependency
+
+      - name: Install dependencies
+        run: go get .
+
+      - name: Run database migrations
+        run: goose postgres "postgres://postgres:postgres@localhost:5432/postgres" up
+
+      - name: Run test
+        run: go test ./...
