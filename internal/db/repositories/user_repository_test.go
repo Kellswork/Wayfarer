@@ -12,6 +12,7 @@ import (
 	"github.com/kellswork/wayfarer/internal/db"
 	"github.com/kellswork/wayfarer/internal/db/migration"
 	"github.com/kellswork/wayfarer/internal/db/models"
+	"github.com/kellswork/wayfarer/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,14 +20,22 @@ import (
 func Test_CreateUser(t *testing.T) {
 	// 1. setup pahse
 	// 1.1 setup db connectiom
-	err := godotenv.Load("../../../.env")
-	require.NoError(t, err)
-	testDBUrl := os.Getenv("TEST_DB_URL")
+	// err := godotenv.Load("../../../.env")
+	// require.NoError(t, err)
+	// testDBUrl := os.Getenv("TEST_DB_URL")
 	ctx := context.Background()
-	dbStore, err := db.ConnectDatabase(testDBUrl)
+
+	container, err := utils.CreatePostgresContainer(ctx)
 	require.NoError(t, err)
 
-	defer db.CloseDatabase(dbStore)
+	t.Cleanup(func() {
+		if err := container.Terminate(ctx); err != nil {
+			t.Fatalf(" failed to terminate container: %s", err)
+		}
+	})
+
+	dbStore, err := db.ConnectDatabase(container.ConnectionString)
+	require.NoError(t, err)
 
 	migrator := migration.New(dbStore)
 	err = migrator.Up()

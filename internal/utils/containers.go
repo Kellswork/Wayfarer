@@ -2,7 +2,7 @@ package utils
 
 import (
 	"context"
-	"path/filepath"
+	// "path/filepath"
 	"time"
 
 	"github.com/testcontainers/testcontainers-go"
@@ -18,8 +18,8 @@ type PostgresContainer struct {
 func CreatePostgresContainer(ctx context.Context) (*PostgresContainer, error) {
 	pgContainer, err := postgres.RunContainer(ctx,
 		testcontainers.WithImage("docker.io/postgres:16-alpine"),
-		postgres.WithInitScripts(filepath.Join("testdata", "init-user-db.sh")),
-		postgres.WithConfigFile(filepath.Join("testdata", "my-postgres.conf")),
+		// postgres.WithInitScripts(filepath.Join("testdata", "init-user-db.sh")),
+		// postgres.WithConfigFile(filepath.Join("testdata", "my-postgres.conf")),
 		postgres.WithDatabase("test-db"),
 		postgres.WithUsername("postgres"),
 		postgres.WithPassword("postgres"),
