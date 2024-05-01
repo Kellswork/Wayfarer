@@ -1,4 +1,5 @@
 # Wayfarer - Golang
+[![TEST](https://github.com/Kellswork/Wayfarer/actions/workflows/go.yml/badge.svg)](https://github.com/Kellswork/Wayfarer/actions/workflows/go.yml)
 
 ## Project Overview:
 
